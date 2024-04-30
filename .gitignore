@@ -4,6 +4,7 @@ out/
 !**/src/test/**/out/
 .idea/
 .iml
+Java2_laba5huffman.iml
 
 ### Eclipse ###
 .apt_generated
