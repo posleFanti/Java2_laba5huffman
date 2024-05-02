@@ -1,5 +1,3 @@
-import com.sun.source.tree.Tree;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -13,6 +11,38 @@ class SortByValue implements Comparator<Entry<Character, Integer>> {
     }
 }
 
+class Node {
+    Node left = null;
+    Node right = null;
+    int value;
+    boolean isLeaf = false;
+    char symbol;
+
+    void setLeft(Node left) {
+        this.left = left;
+    }
+
+    void setRight(Node right) {
+        this.right = right;
+    }
+
+    Node(int value) {
+        this.value = value;
+    }
+
+    Node(Node left, Node right, int value) {
+        this.left = left;
+        this.right = right;
+        this.value = value;
+    }
+
+    Node(char symbol, int value) {
+        this.isLeaf = true;
+        this.symbol = symbol;
+        this.value = value;
+    }
+}
+
 public class Main {
     private static Map<Character, Integer> sortByComparator(Map<Character, Integer> map) {
         List<Entry<Character, Integer>> list = new LinkedList<>(map.entrySet());
@@ -22,6 +52,15 @@ public class Main {
             sortedMap.put(e.getKey(), e.getValue());
         }
         return sortedMap;
+    }
+
+    private static Deque<Node> createQueue(Map<Character, Integer> alphabet) {
+        List<Entry<Character, Integer>> entryList = new LinkedList<>(alphabet.entrySet());
+        Deque<Node> queue = new ArrayDeque<>();
+        for (Entry<Character, Integer> e : entryList) {
+            queue.offerFirst(new Node(e.getKey(), e.getValue()));
+        }
+        return queue;
     }
 
     public static void main(String[] args) {
@@ -50,5 +89,10 @@ public class Main {
             }
         }
         Map<Character, Integer> sortedAlphabet = sortByComparator(alphabet);
+        Deque<Node> queue = createQueue(sortedAlphabet);
+        while (queue.size() > 1) {
+
+            //queue.offerFirst(new Node(a, b, a.value + b.value));
+        }
     }
 }
