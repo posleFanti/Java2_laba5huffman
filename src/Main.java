@@ -1,6 +1,10 @@
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.Map.Entry;
 
@@ -11,24 +15,12 @@ class SortByValue implements Comparator<Entry<Character, Integer>> {
     }
 }
 
-class Node {
+class Node implements Comparable<Node> {
     Node left = null;
     Node right = null;
     int value;
     boolean isLeaf = false;
     char symbol;
-
-    void setLeft(Node left) {
-        this.left = left;
-    }
-
-    void setRight(Node right) {
-        this.right = right;
-    }
-
-    Node(int value) {
-        this.value = value;
-    }
 
     Node(Node left, Node right, int value) {
         this.left = left;
@@ -40,6 +32,11 @@ class Node {
         this.isLeaf = true;
         this.symbol = symbol;
         this.value = value;
+    }
+
+    @Override
+    public int compareTo(Node o) {
+        return this.value - o.value;
     }
 }
 
@@ -54,27 +51,63 @@ public class Main {
         return sortedMap;
     }
 
-    private static Deque<Node> createQueue(Map<Character, Integer> alphabet) {
-        List<Entry<Character, Integer>> entryList = new LinkedList<>(alphabet.entrySet());
-        Deque<Node> queue = new ArrayDeque<>();
-        for (Entry<Character, Integer> e : entryList) {
-            queue.offerFirst(new Node(e.getKey(), e.getValue()));
+    private static PriorityQueue<Node> createQueue(Map<Character, Integer> alphabet) {
+        PriorityQueue<Node> queue = new PriorityQueue<>();
+        for (char c : alphabet.keySet()) {
+            queue.offer(new Node(c, alphabet.get(c)));
         }
         return queue;
     }
 
-    public static void main(String[] args) {
-        ArrayList<String> fileLines = new ArrayList<>();
-        try (BufferedReader br = new BufferedReader(new FileReader("lorem.txt"))) {
-            String str;
-            while ((str = br.readLine()) != null)
-                fileLines.add(str);
-        } catch (IOException e) {
-            System.out.println(e.getMessage());
+    private static HashMap<Character, String> generateFixedLengthCodes(String alphabet) {
+        HashMap<Character, String> codes = new HashMap<>();
+
+        // Generate fixed-length codes for each character in the alphabet
+        int codeLength = (int) Math.ceil(Math.log(alphabet.length()) / Math.log(2));
+        int codeNumber = 0;
+        for (char ch : alphabet.toCharArray()) {
+            String code = Integer.toBinaryString(codeNumber);
+
+            // Pad leading zeros to make the code fixed length
+            while (code.length() < codeLength) {
+                code = "0" + code;
+            }
+
+            codes.put(ch, code);
+            codeNumber++;
         }
-        for (String s : fileLines) {
-            System.out.println(s);
+
+        return codes;
+    }
+
+    private static Node generateHuffmanCodes(PriorityQueue<Node> queue) {
+        while (queue.size() > 1) {
+            Node a = queue.poll();
+            Node b = queue.poll();
+            queue.offer(new Node(a, b, a.value + b.value));
         }
+        return queue.poll();
+    }
+
+    private static void printHuffmanCodes(Node node, String code) {
+        if (node == null)
+            return;
+        if (node.isLeaf)
+            System.out.println(node.symbol + ": " + code);
+        printHuffmanCodes(node.left, code + "0");
+        printHuffmanCodes(node.right, code + "1");
+    }
+
+    private static void generateMap(Node node, HashMap<Character, String> codes, String code) {
+        if (node == null)
+            return;
+        if (node.isLeaf)
+            codes.put(node.symbol, code);
+        generateMap(node.left, codes, code + "0");
+        generateMap(node.right, codes, code + "1");
+    }
+
+    private static Map<Character, Integer> generateAlphabet(ArrayList<String> fileLines) {
         Map<Character, Integer> alphabet = new HashMap<>();
         for (String s : fileLines) {
             char[] chars = s.toCharArray();
@@ -88,11 +121,63 @@ public class Main {
                 }
             }
         }
-        Map<Character, Integer> sortedAlphabet = sortByComparator(alphabet);
-        Deque<Node> queue = createQueue(sortedAlphabet);
-        while (queue.size() > 1) {
+        return sortByComparator(alphabet);
+    }
 
-            //queue.offerFirst(new Node(a, b, a.value + b.value));
-        }
+    private static void printMenu() {
+        System.out.println("Menu");
+        System.out.println("1. Открыть текстовый файл");
+        System.out.println("2. Вывести содержимое текстового файла");
+        System.out.println("3. Вывести символы алфавита с указанием частоты их появления в файле");
+        System.out.println("4. Сгенерировать коды фиксированной длины");
+        System.out.println("5. Сгенерировать коды Хаффмана");
+        System.out.println("6. Сжать файл с кодами фиксированной длины");
+        System.out.println("7. Сжать файл с кодами Хаффмана");
+        System.out.print("> ");
+    }
+
+    public static void main(String[] args) {
+        Scanner in = new Scanner(System.in);
+        ArrayList<String> fileLines = new ArrayList<>();
+        Map<Character, Integer> alphabet = new LinkedHashMap<>();
+        HashMap<Character, String> fixedLengthCodes = new HashMap<>();
+        HashMap<Character, String> huffmanCodes = new HashMap<>();
+        int ans = 0;
+        do {
+            printMenu();
+            ans = in.nextInt();
+            switch (ans) {
+                case 1 -> {
+                    System.out.print("Введите путь к текстовому файлу: ");
+                    File file = Paths.get(in.next()).toFile();
+                    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+                        String str;
+                        while ((str = br.readLine()) != null)
+                            fileLines.add(str);
+                    } catch (IOException e) {
+                        System.out.println(e.getMessage());
+                    }
+                    System.out.println("Файл открыт и готов к работе");
+                }
+                case 2 -> {
+                    for (String s : fileLines)
+                        System.out.println(s);
+                }
+                case 3 -> {
+                    alphabet = generateAlphabet(fileLines);
+                    for (char c : alphabet.keySet())
+                        System.out.println(c + ": " + alphabet.get(c));
+                }
+                case 4 -> fixedLengthCodes = generateFixedLengthCodes(alphabet.keySet().toString());
+                case 5 -> {
+                    PriorityQueue<Node> queue = createQueue(alphabet);
+                    generateMap(generateHuffmanCodes(queue), huffmanCodes, "");
+                }
+                case 6 -> {}
+                case 7 -> {}
+                case 8 -> System.out.println("Завершение работы");
+                default -> System.out.println("Неверная команда!");
+            }
+        } while (ans != 8);
     }
 }
