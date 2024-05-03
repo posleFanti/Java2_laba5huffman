@@ -1,7 +1,4 @@
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -61,22 +58,16 @@ public class Main {
 
     private static HashMap<Character, String> generateFixedLengthCodes(String alphabet) {
         HashMap<Character, String> codes = new HashMap<>();
-
-        // Generate fixed-length codes for each character in the alphabet
         int codeLength = (int) Math.ceil(Math.log(alphabet.length()) / Math.log(2));
         int codeNumber = 0;
         for (char ch : alphabet.toCharArray()) {
             String code = Integer.toBinaryString(codeNumber);
-
-            // Pad leading zeros to make the code fixed length
-            while (code.length() < codeLength) {
+            while (code.length() < codeLength)
                 code = "0" + code;
-            }
-
             codes.put(ch, code);
             codeNumber++;
         }
-
+        System.out.println("Коды фиксированной длины сгенерированы");
         return codes;
     }
 
@@ -124,6 +115,21 @@ public class Main {
         return sortByComparator(alphabet);
     }
 
+    private static void compress(ArrayList<String> fileLines, HashMap<Character, String> codes) {
+        Scanner in = new Scanner(System.in);
+        System.out.print("Введите название файла: ");
+        try (FileWriter fw = new FileWriter(in.next())){
+            for (String str : fileLines) {
+                for (char c : str.toCharArray()) {
+                    fw.write(codes.get(c));
+                }
+            }
+            fw.flush();
+        } catch (IOException e) {
+            System.out.println(e);
+        }
+    }
+
     private static void printMenu() {
         System.out.println("Menu");
         System.out.println("1. Открыть текстовый файл");
@@ -133,11 +139,13 @@ public class Main {
         System.out.println("5. Сгенерировать коды Хаффмана");
         System.out.println("6. Сжать файл с кодами фиксированной длины");
         System.out.println("7. Сжать файл с кодами Хаффмана");
+        System.out.println("8. Выход из программы");
         System.out.print("> ");
     }
 
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
+        File file = null;
         ArrayList<String> fileLines = new ArrayList<>();
         Map<Character, Integer> alphabet = new LinkedHashMap<>();
         HashMap<Character, String> fixedLengthCodes = new HashMap<>();
@@ -149,7 +157,7 @@ public class Main {
             switch (ans) {
                 case 1 -> {
                     System.out.print("Введите путь к текстовому файлу: ");
-                    File file = Paths.get(in.next()).toFile();
+                    file = Paths.get(in.next()).toFile();
                     try (BufferedReader br = new BufferedReader(new FileReader(file))) {
                         String str;
                         while ((str = br.readLine()) != null)
@@ -172,9 +180,10 @@ public class Main {
                 case 5 -> {
                     PriorityQueue<Node> queue = createQueue(alphabet);
                     generateMap(generateHuffmanCodes(queue), huffmanCodes, "");
+                    System.out.println("Коды Хаффмана сгенерированы");
                 }
-                case 6 -> {}
-                case 7 -> {}
+                case 6 -> compress(fileLines, fixedLengthCodes);
+                case 7 -> compress(fileLines, huffmanCodes);
                 case 8 -> System.out.println("Завершение работы");
                 default -> System.out.println("Неверная команда!");
             }

@@ -3,8 +3,8 @@ out/
 !**/src/main/**/out/
 !**/src/test/**/out/
 .idea/
-.iml
-Java2_laba5huffman.iml
+*.iml
+*.txt
 
 ### Eclipse ###
 .apt_generated
