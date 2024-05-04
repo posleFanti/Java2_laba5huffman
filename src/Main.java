@@ -176,10 +176,16 @@ public class Main {
                     for (char c : alphabet.keySet())
                         System.out.println(c + ": " + alphabet.get(c));
                 }
-                case 4 -> fixedLengthCodes = generateFixedLengthCodes(alphabet.keySet().toString());
+                case 4 -> {
+                    fixedLengthCodes = generateFixedLengthCodes(alphabet.keySet().toString());
+                    for (char c : fixedLengthCodes.keySet().stream().toList())
+                        System.out.println(c + ": " + fixedLengthCodes.get(c));
+                }
                 case 5 -> {
                     PriorityQueue<Node> queue = createQueue(alphabet);
                     generateMap(generateHuffmanCodes(queue), huffmanCodes, "");
+                    for (char c : huffmanCodes.keySet())
+                        System.out.println(c + ": " + huffmanCodes.get(c));
                     System.out.println("Коды Хаффмана сгенерированы");
                 }
                 case 6 -> compress(fileLines, fixedLengthCodes);
