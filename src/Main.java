@@ -56,15 +56,15 @@ public class Main {
         return queue;
     }
 
-    private static HashMap<Character, String> generateFixedLengthCodes(String alphabet) {
+    private static HashMap<Character, String> generateFixedLengthCodes(Set alphabet) {
         HashMap<Character, String> codes = new HashMap<>();
-        int codeLength = (int) Math.ceil(Math.log(alphabet.length()) / Math.log(2));
+        int codeLength = (int) Math.ceil(Math.log(alphabet.size()) / Math.log(2));
         int codeNumber = 0;
-        for (char ch : alphabet.toCharArray()) {
+        for (Object ch : alphabet) {
             String code = Integer.toBinaryString(codeNumber);
             while (code.length() < codeLength)
                 code = "0" + code;
-            codes.put(ch, code);
+            codes.put(ch.toString().charAt(0), code);
             codeNumber++;
         }
         System.out.println("Коды фиксированной длины сгенерированы");
@@ -117,14 +117,20 @@ public class Main {
 
     private static void compress(ArrayList<String> fileLines, HashMap<Character, String> codes) {
         Scanner in = new Scanner(System.in);
+        int count = 0;
         System.out.print("Введите название файла: ");
         try (FileWriter fw = new FileWriter(in.next())){
             for (String str : fileLines) {
                 for (char c : str.toCharArray()) {
-                    fw.write(codes.get(c));
+                    String code = codes.get(c);
+                    for (char c1 : code.toCharArray()) {
+                        fw.write(c1);
+                        count++;
+                    }
                 }
             }
             fw.flush();
+            System.out.println("Кол-во символов в файле: " + count);
         } catch (IOException e) {
             System.out.println(e);
         }
@@ -134,7 +140,7 @@ public class Main {
         System.out.println("Menu");
         System.out.println("1. Открыть текстовый файл");
         System.out.println("2. Вывести содержимое текстового файла");
-        System.out.println("3. Вывести символы алфавита с указанием частоты их появления в файле");
+        System.out.println("3. Сгенерировать алфавит с указанием частоты появления символов в файле");
         System.out.println("4. Сгенерировать коды фиксированной длины");
         System.out.println("5. Сгенерировать коды Хаффмана");
         System.out.println("6. Сжать файл с кодами фиксированной длины");
@@ -146,7 +152,7 @@ public class Main {
     public static void main(String[] args) {
         Scanner in = new Scanner(System.in);
         File file = null;
-        ArrayList<String> fileLines = new ArrayList<>();
+        ArrayList<String> fileLines = null;
         Map<Character, Integer> alphabet = new LinkedHashMap<>();
         HashMap<Character, String> fixedLengthCodes = new HashMap<>();
         HashMap<Character, String> huffmanCodes = new HashMap<>();
@@ -156,6 +162,7 @@ public class Main {
             ans = in.nextInt();
             switch (ans) {
                 case 1 -> {
+                    fileLines = new ArrayList<>();
                     System.out.print("Введите путь к текстовому файлу: ");
                     file = Paths.get(in.next()).toFile();
                     try (BufferedReader br = new BufferedReader(new FileReader(file))) {
@@ -175,11 +182,13 @@ public class Main {
                     alphabet = generateAlphabet(fileLines);
                     for (char c : alphabet.keySet())
                         System.out.println(c + ": " + alphabet.get(c));
+                    System.out.println("Алфавит сгенерирован");
                 }
                 case 4 -> {
-                    fixedLengthCodes = generateFixedLengthCodes(alphabet.keySet().toString());
+                    fixedLengthCodes = generateFixedLengthCodes(alphabet.keySet());
                     for (char c : fixedLengthCodes.keySet().stream().toList())
                         System.out.println(c + ": " + fixedLengthCodes.get(c));
+                    System.out.println("Коды фиксированной длины сгенерированы");
                 }
                 case 5 -> {
                     PriorityQueue<Node> queue = createQueue(alphabet);
